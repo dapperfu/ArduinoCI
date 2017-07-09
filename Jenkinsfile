@@ -1,8 +1,8 @@
-
-def arduinos=[["nano", "atmega168"], ["nano", "atmega328"], ["mega", "atmega1280"], ["mega", "atmega2560"]]
-def projects=["Blink"]
-def builds = [:]
-
+def arduinos=[["nano", "atmega168"],
+              ["nano", "atmega328"],
+              ["mega", "atmega1280"],
+              ["mega", "atmega2560"],
+              ["leonardo", ""]]
 
 def node_factory(project, board, mcu) {
             node {
@@ -26,6 +26,9 @@ def node_factory(project, board, mcu) {
                 }
             }
 }
+
+def projects=["Blink"]
+def builds = [:]
 
 for (int j = 0; j < projects.size(); j++) {
     def project = projects.get(j)
