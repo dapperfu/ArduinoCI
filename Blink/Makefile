@@ -10,8 +10,4 @@ ARDUINO_DIR ?= ${WORKSPACE}/arduino
 
 ARDMK_DIR ?= ${WORKSPACE}/arduino_make
 
-.DEFAULT:
-default:
-	echo ${ARDUINO_VERSION}
-	echo ${ARDUNIO_VER}
-#include $(ARDMK_DIR)/Arduino.mk
+include $(ARDMK_DIR)/Arduino.mk

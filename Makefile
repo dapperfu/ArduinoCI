@@ -67,7 +67,7 @@ $(DIRS): $(ARCHIVES)
 .PHONY: Blink
 Blink:
 	@echo Building $@...
-	ARDUINO_VERSION=$(subst .,,${ARDUINO_VER}) $(MAKE) -C $@
+	ARDUINO_VERSION=$(subst .,,${ARDUINO_VERSION}) $(MAKE) -C $@
 
 ## Computer Setup
 
