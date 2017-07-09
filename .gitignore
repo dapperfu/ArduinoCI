@@ -1,4 +1,4 @@
 *.tar.gz
 arduino/*
 arduino_make/*
-/build*
+*/build-*
