@@ -1,15 +1,10 @@
-def arduinos=[["nano", "atmega168"], ["nano", "atmega328"]]
+
+def arduinos=[["nano", "atmega168"], ["nano", "atmega328"], ["mega", "atmega1280"], ["mega", "atmega2560"]]
 def projects=["Blink"]
 def builds = [:]
 
-for (int j = 0; j < projects.size(); j++) {
-    def project = projects.get(j)
-    for (int i = 0; i < arduinos.size(); i++) {
-        // Get the actual string here.
-        def board = arduinos.get(i)[0]
-        def mcu = arduinos.get(i)[1]
-        // Into each branch we put the pipeline code we want to execute
-        builds["${project}_${board}_${mcu}"] = {
+
+def node_factory(project, board, mcu) {
             node {
                 stage("Checkout") {
                     git credentialsId: '37739cd2-9654-4774-9380-79e73137d547', url: 'git@github.com:jed-frey/ArduinoCI.git'
@@ -30,6 +25,17 @@ for (int j = 0; j < projects.size(); j++) {
                     sh([script: "rm -rf */build-*"])
                 }
             }
+}
+
+for (int j = 0; j < projects.size(); j++) {
+    def project = projects.get(j)
+    for (int i = 0; i < arduinos.size(); i++) {
+        // Get the actual string here.
+        def board = arduinos.get(i)[0]
+        def mcu = arduinos.get(i)[1]
+        // Into each branch we put the pipeline code we want to execute
+        builds["${project}_${board}_${mcu}"] = {
+            node_factory("${project}", "${board}", "${mcu}")
         }
     }
 }
