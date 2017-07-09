@@ -10,7 +10,7 @@ def node_factory(project, board, mcu) {
                     git credentialsId: '37739cd2-9654-4774-9380-79e73137d547', url: 'git@github.com:jed-frey/ArduinoCI.git'
                 }
                 stage('Setup Environment') {
-                    sh([script: "make env"])
+                    sh([script: "make -j2 env"])
                 }
                 stage("Build ${project}") {
                     withEnv(["BOARD_TAG=${board}", "BOARD_SUB=${mcu}"]) {
