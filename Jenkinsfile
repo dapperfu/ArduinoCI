@@ -1,19 +1,37 @@
-node {
-   def mvnHome
-   stage('Preparation') { // for display purposes
-      // Get some code from a GitHub repository
-      checkout scm
-   }
-   stage('Setup Environment') {
-      sh "make env"
-   }
-   stage('Build Blink') {
-      withEnv(["BOARD_SUB=atmega168"]) {
-          sh "make Blink"
-      }      
-      withEnv(["BOARD_SUB=atmega328"]) {
-          sh "make Blink"
-      }
-      archiveArtifacts '*/build-*/*.elf, */build-*/*.hex'
-   }
+def arduinos=[["nano", "atmega168"], ["nano", "atmega328"]]
+def projects=["Blink"]
+def builds = [:]
+
+for (int j = 0; j < projects.size(); j++) {
+    def project = projects.get(j)
+    for (int i = 0; i < arduinos.size(); i++) {
+        // Get the actual string here.
+        def board = arduinos.get(i)[0]
+        def mcu = arduinos.get(i)[1]
+        // Into each branch we put the pipeline code we want to execute
+        builds["${project}_${board}_${mcu}"] = {
+            node {
+                stage("Checkout") {
+                    git credentialsId: '37739cd2-9654-4774-9380-79e73137d547', url: 'git@github.com:jed-frey/ArduinoCI.git'
+                }
+                stage('Setup Environment') {
+                    sh([script: "make env"])
+                }
+                stage("Build ${project}") {
+                    withEnv(["BOARD_TAG=${board}", "BOARD_SUB=${mcu}"]) {
+                        sh([script: "make ${project}"])
+                    }
+                }
+                stage("Archive Artifacts") {
+                    archiveArtifacts([artifacts: '*/build-*/*.elf, */build-*/*.hex'])
+                    fingerprint '*/build-*/*.elf, */build-*/*.hex'
+                }
+                stage("Delete Builds") {
+                    sh([script: "rm -rf */build-*"])
+                }
+            }
+        }
+    }
 }
+
+parallel builds
