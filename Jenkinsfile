@@ -2,7 +2,7 @@ def arduinos=[["nano", "atmega168"],
               ["nano", "atmega328"],
               ["mega", "atmega1280"],
               ["mega", "atmega2560"],
-              ["leonardo", ""]]
+             ]
 
 def node_factory(project, board, mcu) {
             node {
