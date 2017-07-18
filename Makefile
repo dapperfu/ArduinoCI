@@ -8,12 +8,6 @@ ARDUINO_MK_VERSION ?= 1.5
 ARDUINO_MK_URL = https://github.com/sudar/Arduino-Makefile/archive/${ARDUINO_MK_VERSION}.tar.gz
 ARDUINO_URL = https://github.com/arduino/Arduino/archive/${ARDUINO_VERSION}.tar.gz
 
-# Archive Files
-ARCHIVES = arduino.tar.gz arduino_make.tar.gz
-
-# Directories
-DIRS = $(patsubst %.tar.gz, %, $(ARCHIVES))
-
 # Download Command
 DOWNLOAD_CMD ?= curl --silent --location --output
 
@@ -33,33 +27,39 @@ all: env
 
 ## Environment Setup
 .PHONY: env
-env: ${DIRS}
+env: arduino arduino_make
 	@echo Setup Environment.
 
-# Clean archives and folders.
+# Clean arduino & arduino_make folders.
 .PHONY: clean
 clean:
 	@echo Deleting directories...
-	@rm -rf ${DIRS}
-	@echo Deleting archives...
+	@rm -rf arduino arduino_make
+
+# Clean everything, including cached downloads.
+.PHONY: cleanall
+cleanall: clean
+	@echo Deleting cached archives...
 	@rm -rf *.tar.gz
 
 # Download the Arduino release.
-arduino.tar.gz:
+arduino_${ARDUINO_VERSION}.tar.gz:
 	@echo Downloading $@...
 	@${DOWNLOAD_CMD} $@ ${ARDUINO_URL}
 
+# Extract into arduino folder.
+arduino: arduino_${ARDUINO_VERSION}.tar.gz
+	@mkdir -p $@
+	@tar -xzf $< -C $@ --strip=1
+
 # Download the Arduino Make release.
-arduino_make.tar.gz:
+arduino_make_${ARDUINO_MK_VERSION}.tar.gz:
 	@echo Downloading $@...
 	@${DOWNLOAD_CMD} $@ ${ARDUINO_MK_URL}
 
-# Make directories and expand archives.
-$(DIRS): $(ARCHIVES)
-	@echo Making $@ directory...
+arduino_make: arduino_make_${ARDUINO_MK_VERSION}.tar.gz
 	@mkdir -p $@
-	@echo Extracting $@.tar.gz to $@...
-	@tar -xzf $@.tar.gz -C $@ --strip=1
+	@tar -xzf $< -C $@ --strip=1
 
 ## Project Builds
 
