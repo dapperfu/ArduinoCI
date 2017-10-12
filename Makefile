@@ -85,6 +85,12 @@ Blink: env
 	@echo Building $@...
 	ARDUINO_VERSION=$(subst .,,${ARDUINO_VERSION}) $(MAKE) -j4 -C $@
 
+.PHONY: CAN_Bus_Shield
+CAN_Bus_Shield:
+	@echo Building $@...
+	ARDUINO_VERSION=$(subst .,,${ARDUINO_VERSION}) $(MAKE) -j4 -C $@
+
+
 ## Computer Setup
 # OS Detection
 ifeq ($(OS),Windows_NT)
