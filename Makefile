@@ -1,12 +1,14 @@
 ## Configuration
 # Versions to get.
-ARDUINO_VERSION ?= 1.8.3
-ARDUINO_MK_VERSION ?= 1.5
+ARDUINO_VERSION ?= 1.8.5
+ARDUINO_MK_VERSION ?= 1.6.0
 
 ## Setup
 # URLS to download.
 ARDUINO_MK_URL = https://github.com/sudar/Arduino-Makefile/archive/${ARDUINO_MK_VERSION}.tar.gz
 ARDUINO_URL = https://github.com/arduino/Arduino/archive/${ARDUINO_VERSION}.tar.gz
+SANGUINO_URL = https://github.com/Lauszus/sanguino/tarball/master
+U8GLIB_URL = https://bintray.com/olikraus/u8glib/download_file?file_path=u8glib_arduino_v1.18.1.zip
 
 # Download Command
 DOWNLOAD_CMD ?= curl --silent --location --output
@@ -15,32 +17,46 @@ DOWNLOAD_CMD ?= curl --silent --location --output
 # If not set from Jenkins set to directory of Makefile
 WORKSPACE ?= $(realpath $(dir $(firstword $(MAKEFILE_LIST))))
 
+# Files to determine if a stage has been completed
+U8GLIB = arduino/libraries/U8glib/INSTALL.TXT
+SANGUINO = arduino/hardware/arduino/avr/variants/sanguino/pins_arduino.h
+
+# Temporary directory to extract sanguino to
+SANGUINO_TMP = /tmp/sanguino
+
 ## Make Targets
-.DEFAULT:
-default:
-	@echo No default rule
-
-# Do everything.
-.PHONY: all
-all: env
-	@echo Done.
-
 ## Environment Setup
+.DEFAULT: env
 .PHONY: env
-env: arduino arduino_make
-	@echo Setup Environment.
+env: arduino arduino_make ${U8GLIB} ${SANGUINO}
+	@echo Environment Setup.
+
+${U8GLIB}: u8glib_arduino.zip arduino
+# Extract the u8glib library.
+	@unzip -o ${<} -d arduino/libraries/
+
+${SANGUINO}: sanguino.tar.gz arduino
+# Make temp directory to extract into
+	@mkdir -p ${SANGUINO_TMP}
+# Extract, strip the top level.
+	@tar --strip-components=1 -C ${SANGUINO_TMP} -xzvf ${<}
+# Copy over required files.
+	@mv -n ${SANGUINO_TMP}/avr/bootloaders/optiboot/* arduino/hardware/arduino/avr/bootloaders/optiboot/
+	@mv -n ${SANGUINO_TMP}/avr/variants/sanguino/ arduino/hardware/arduino/avr/variants/
+# Strip out the 'cpu.menu' line and echo into the available avr boards file.
+	@grep -v "cpu.menu" ${SANGUINO_TMP}/avr/boards.txt >> arduino/hardware/arduino/avr/boards.txt
+
+sanguino.tar.gz:
+	@${DOWNLOAD_CMD} ${@} ${SANGUINO_URL}
+
+u8glib_arduino.zip:
+	@${DOWNLOAD_CMD} ${@} ${U8GLIB_URL}
 
 # Clean arduino & arduino_make folders.
 .PHONY: clean
 clean:
-	@echo Deleting directories...
-	@rm -rf arduino arduino_make
-
-# Clean everything, including cached downloads.
-.PHONY: cleanall
-cleanall: clean
-	@echo Deleting cached archives...
-	@rm -rf *.tar.gz
+	@echo Cleaning directories...
+	@git clean -xfd
 
 # Download the Arduino release.
 arduino_${ARDUINO_VERSION}.tar.gz:
@@ -63,14 +79,13 @@ arduino_make: arduino_make_${ARDUINO_MK_VERSION}.tar.gz
 
 ## Project Builds
 
-# Blink Project
+# Marlin
 .PHONY: Blink
-Blink:
+Blink: env
 	@echo Building $@...
 	ARDUINO_VERSION=$(subst .,,${ARDUINO_VERSION}) $(MAKE) -j4 -C $@
 
 ## Computer Setup
-
 # OS Detection
 ifeq ($(OS),Windows_NT)
     detected_OS := Windows
@@ -78,10 +93,10 @@ else
     detected_OS := $(shell uname -s)
 endif
 
-# Install the compiler.
-.PHONY: compiler
-compiler:
+# Bootstrap the environment
+.PHONY: bootstrap
+bootstrap:
 ifeq (${detected_OS}, Linux)
 	@echo Installing compiler for Linux
-	@sudo apt-get install gcc-avr binutils-avr gdb-avr avr-libc avrdude
+	@sudo apt-get install gcc-avr binutils-avr gdb-avr avr-libc avrdude curl
 endif
