@@ -1,6 +1,6 @@
 ## Configuration
 # Versions to get.
-ARDUINO_VERSION ?= 1.8.5
+ARDUINO_VERSION ?= 1.8.10
 ARDUINO_MK_VERSION ?= 1.6.0
 
 ## Setup
@@ -89,20 +89,3 @@ Blink: env
 CAN_Bus_Shield:
 	@echo Building $@...
 	ARDUINO_VERSION=$(subst .,,${ARDUINO_VERSION}) $(MAKE) -j4 -C $@
-
-
-## Computer Setup
-# OS Detection
-ifeq ($(OS),Windows_NT)
-    detected_OS := Windows
-else
-    detected_OS := $(shell uname -s)
-endif
-
-# Bootstrap the environment
-.PHONY: bootstrap
-bootstrap:
-ifeq (${detected_OS}, Linux)
-	@echo Installing compiler for Linux
-	@sudo apt-get install gcc-avr binutils-avr gdb-avr avr-libc avrdude curl
-endif
